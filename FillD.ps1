@@ -3,7 +3,11 @@ Disk Test/Free Space Wipe
 Place in the folder where you want to make the files
 #>
 <# Variables #>
-$freeSpaceHaltSize = '741,374,182,400' #examples 1,099,511,627,776 1TB, 107,374,182,400 100GB, 10,737,418,240 10GB, 1,073,741,824 1GB, 104,857,600 100MB
+$dynamicFreeSpace = $True #Ignore freeSpaceHaltSize and determine a reasonable freespace size.
+
+#freeSpaceHaltSize ignored if dynamicFreeSpace is True
+$freeSpaceHaltSize = '741,374,182,400' #examples 1,099,511,627,776 1TB, 107,374,182,400 100GB, 10,737,418,240 10GB, 1,073,741,824 1GB, 104,857,600 100MB, 
+
 $baseFileName = 'DEADBEEF' #file will contain 64kb of "DE AD BE EF" hex
 $DevID = "DeviceID='C:'"
 $PadFilePath = "C:\!FITPadFiles-doNotDelete"
@@ -42,13 +46,23 @@ $ByteArrayPattern = new-object byte[](1024kb)
 }
 Write-Host Starting Disk Object...
 $disk = Get-WmiObject Win32_LogicalDisk -Filter $DevID | Select-Object FreeSpace
+if ($dynamicFreeSpace) {
+	Write-Host Current freespace in bytes: $disk.FreeSpace
+	$fillsize = ($disk.FreeSpace / 2)
+	If ($fillsize -gt 200000000) {
+		$fillsize = 200000000
+	}
+	Write-Host Leaving this many bytes free: ($disk.FreeSpace / 2)
+	Write-Host Filling this many bytes: $fillsize
 
-$freeSpaceHaltSize = $freeSpaceHaltSize -replace ',', ''
-Write-Host Current freespace in bytes: $disk.FreeSpace
-Write-Host Leaving this many bytes free: $freeSpaceHaltSize
-$fillsize = ($disk.FreeSpace - $freeSpaceHaltSize)
-Write-Host Filling this many bytes: $fillsize
-
+}
+else {
+	$freeSpaceHaltSize = $freeSpaceHaltSize -replace ',', ''
+	Write-Host Current freespace in bytes: $disk.FreeSpace
+	Write-Host Leaving this many bytes free: $freeSpaceHaltSize
+	$fillsize = ($disk.FreeSpace - $freeSpaceHaltSize)  
+	Write-Host Filling this many bytes: $fillsize
+}
 $Level1 = [int]($fillsize / 1048576 / 10)
 $Level2 = [int]($Level1 / 10)
 $Level3 = [int]($Level2 / 10)
