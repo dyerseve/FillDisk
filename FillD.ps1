@@ -3,7 +3,7 @@ Disk Test/Free Space Wipe
 Place in the folder where you want to make the files
 #>
 <# Variables #>
-$dynamicFreeSpace = $True #Ignore freeSpaceHaltSize and determine a reasonable freespace size.
+$dynamicFreeSpace = $True #Ignore freeSpaceHaltSize and determine a reasonable freespace size (half free space unless it's over 10GB, then it's fixed at 10GB)
 
 #freeSpaceHaltSize ignored if dynamicFreeSpace is True
 $freeSpaceHaltSize = '741,374,182,400' #examples 1,099,511,627,776 1TB, 107,374,182,400 100GB, 10,737,418,240 10GB, 1,073,741,824 1GB, 104,857,600 100MB, 
@@ -49,8 +49,8 @@ $disk = Get-WmiObject Win32_LogicalDisk -Filter $DevID | Select-Object FreeSpace
 if ($dynamicFreeSpace) {
 	Write-Host Current freespace in bytes: $disk.FreeSpace
 	$fillsize = ($disk.FreeSpace / 2)
-	If ($fillsize -gt 200000000) {
-		$fillsize = 200000000
+	If ($fillsize -gt 10737418240) {
+		$fillsize = 10737418240
 	}
 	Write-Host Leaving this many bytes free: ($disk.FreeSpace / 2)
 	Write-Host Filling this many bytes: $fillsize
